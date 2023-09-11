@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>未读邮件导出</title>
+</head>
+<body>
+<h1>未读邮件标题</h1>
+
+<!-- 表格用于显示未读邮件标题 -->
+<table border="1">
+    <thead>
+    <tr>
+        <th>标题</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>邮件标题1</td>
+    </tr>
+    <tr>
+        <td>邮件标题2</td>
+    </tr>
+    <!-- 在这里添加更多行以显示未读邮件标题 -->
+    </tbody>
+</table>
+
+<!-- 导出按钮 -->
+<button id="exportButton">导出到Word</button>
+
+<script>
+    document.getElementById("exportButton").addEventListener("click", function () {
+        // 创建一个Blob对象，包含要导出的数据（示例数据）
+        var textToWrite = "邮件标题1\n邮件标题2"; // 这里是示例数据
+        var blob = new Blob([textToWrite], { type: "text/plain" });
+
+        // 创建FormData对象，并将Blob对象添加到其中
+        var formData = new FormData();
+        formData.append("file", blob, "unread_emails.txt");
+
+        // 使用fetch API发送POST请求到后端
+        fetch("/export", {
+            method: "POST",
+            body: formData
+        })
+            .then(response => response.blob())
+            .then(data => {
+                // 在这里处理后端响应，例如提供下载链接
+                var url = window.URL.createObjectURL(data);
+                var a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = "unread_emails.docx"; // 指定导出文件名
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL("/exportDocx");
+            })
+            .catch(error => {
+                console.error("请求失败:", error);
+            });
+    });
+</script>
+</body>
+</html>

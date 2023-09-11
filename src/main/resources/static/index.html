@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email List</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+
+  <!-- 引入 Element UI 样式 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.3/lib/theme-chalk/index.css">
+
+  <!-- 引入 Vue.js 和 Element UI 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.3/lib/index.js"></script>
+  <!-- 引入 Axios 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+</head>
+<body>
+<div id="app">
+  <el-container>
+    <el-header>
+      <h1>Email List</h1>
+    </el-header>
+    <el-main>
+      <el-table :data="emails" style="width: 100%">
+        <el-table-column prop="title" label="标题"></el-table-column>
+        <el-table-column prop="sender" label="发件人"></el-table-column>
+        <el-table-column prop="createTime" label="发送时间"></el-table-column>
+        <el-table-column label="操作">
+          <template slot-scope="scope">
+            <el-button type="primary" @click="viewDetails(scope.row.id)">查看详情</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-main>
+  </el-container>
+</div>
+
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      emails: []
+    },
+    created() {
+      this.fetchEmails();
+    },
+    methods: {
+      fetchEmails() {
+        // 使用 Axios 或其他 AJAX 库发送请求
+        axios.get('http://localhost:8080/springboot-demo/email/listEmail')
+                .then(response => {
+                  this.emails = response.data;
+                })
+                .catch(error => {
+                  console.error('获取邮件数据失败：', error);
+                });
+      },
+      viewDetails(id) {
+        // 在这里可以访问当前记录的ID（id），然后执行相关操作
+        console.log('当前记录的ID：', id);
+        // 使用 JavaScript 来进行页面跳转
+        window.location.href = `detail.html?id=${id}`;
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

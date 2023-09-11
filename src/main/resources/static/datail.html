@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- 包含所需的样式和脚本 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.3/lib/theme-chalk/index.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.3/lib/index.js"></script>
+</head>
+<body>
+<div id="app">
+  <el-container>
+    <el-main>
+      <h1>邮件详情</h1>
+      <div>
+        <p><strong>发件人：</strong>{{ email.sender }}</p>
+        <p><strong>标题：</strong>{{ email.title }}</p>
+        <p><strong>邮件内容：</strong></p>
+        <div v-html="email.content"></div> <!-- 使用 v-html 显示富文本内容 -->
+      </div>
+    </el-main>
+  </el-container>
+</div>
+
+<script>
+  // 使用 JavaScript 获取查询参数中的邮件ID
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailId = urlParams.get('id');
+
+
+  new Vue({
+    el: '#app',
+    data: {
+      email: []
+    },
+    created() {
+      this.fetchEmails(emailId);
+    },
+    methods: {
+      fetchEmails(emailId) {
+        // 使用 Axios 或其他 AJAX 库发送请求
+        axios.get('http://localhost:8080/springboot-demo/email/detail?${emailId}')
+                .then(response => {
+                  this.email = response.data;
+                })
+                .catch(error => {
+                  console.error('获取邮件数据失败：', error);
+                });
+      }
+    }
+  });
+</script>
+</body>
+</html>
