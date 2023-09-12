@@ -105,27 +105,46 @@ public class ScheduledTasksConfig {
                     String content="";
                     // 检查邮件的内容是否包含 PDF 附件
                     byte[] pdfData=null;
-                    String contentType = message.getContentType();
-                    if (contentType.contains("text/plain") || contentType.contains("text/html")) {
-                        // 邮件内容是纯文本或HTML格式
-                        content = message.getContent().toString();
-                        System.out.println("邮件内容:\n" + content);
-                    } else if (contentType.contains("multipart")) {
-                        // 邮件内容是多部分（可能包含附件）
+                    // 检查邮件是否是 multipart/mixed 类型
+                    if (message.getContentType().toLowerCase().startsWith("multipart/mixed")) {
+                        // 获取邮件的多部分内容
                         Multipart multipart = (Multipart) message.getContent();
-                        for (int i = 0; i < multipart.getCount(); i++) {
-                            BodyPart bodyPart = multipart.getBodyPart(i);
-                            if (bodyPart instanceof MimeBodyPart) {
-                                MimeBodyPart mimeBodyPart = (MimeBodyPart) bodyPart;
-                                System.out.println(mimeBodyPart.getContentType());
-                                if (mimeBodyPart.getContentType().equalsIgnoreCase("application/pdf")) {
-                                    // 这是一个 PDF 附件
-                                    InputStream inputStream = mimeBodyPart.getInputStream();
-                                    pdfData = readPDFData(inputStream);
 
-                                    // 在这里将 PDF 附件的二进制数据保存到数据库或文件系统中
-                                    // 例如：savePdfAttachment(pdfData);
+                        // 遍历多部分内容
+                        for (int i = 0; i < multipart.getCount(); i++) {
+                            BodyPart part = multipart.getBodyPart(i);
+
+                            // 检查内容类型
+                            String contentType = part.getContentType();
+
+                            // 处理邮件正文（文本）
+                            if (contentType.startsWith("text/plain") || contentType.startsWith("text/html")) {
+                                String textContent = (String) part.getContent();
+                                // 在这里处理邮件正文文本
+                                System.out.println("邮件正文:\n" + textContent);
+                            }
+
+                            // 处理附件（PDF）
+                            else if (contentType.startsWith("application/pdf")) {
+                                String fileName = part.getFileName();
+                                InputStream attachmentStream = part.getInputStream();
+
+                                // 将附件数据读取到字节数组中
+                                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                                byte[] buffer = new byte[4096];
+                                int bytesRead;
+                                while ((bytesRead = attachmentStream.read(buffer)) != -1) {
+                                    byteArrayOutputStream.write(buffer, 0, bytesRead);
                                 }
+
+                                // 获取二进制数据
+                                pdfData = byteArrayOutputStream.toByteArray();
+
+                                // 在这里可以处理 PDF 附件数据，例如保存到文件系统或数据库
+                                System.out.println("附件文件名: " + fileName);
+
+                                // 关闭附件流
+                                attachmentStream.close();
                             }
                         }
                     }
