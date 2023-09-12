@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List; // 引入List
 
 @Getter
 @Setter
@@ -39,10 +40,10 @@ public class Email {
     /**
      * 邮件发送时间
      */
-    @Column(name = "createTime",updatable = false)
+    @Column(name = "createTime", updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
 
-    @Lob
-    private byte[] pdfAttachment; // 存储 PDF 附件的二进制数据
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "email") // 使用OneToMany来表示一封邮件可以有多个附件
+    private List<EmailAttachment> attachments; // 存储多个PDF附件的二进制数据的集合
 }

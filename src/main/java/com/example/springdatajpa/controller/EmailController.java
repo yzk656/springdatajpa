@@ -4,6 +4,7 @@ package com.example.springdatajpa.controller;
 import com.example.springdatajpa.common.util.DocxUtil;
 import com.example.springdatajpa.common.util.FileUtil;
 import com.example.springdatajpa.entity.Email;
+import com.example.springdatajpa.entity.EmailAttachment;
 import com.example.springdatajpa.service.EmailService;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -12,10 +13,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -62,18 +60,41 @@ public class EmailController {
         return emailService.detailById(id);
     }
 
-    /*pdf下载*/
+    /**
+     * pdf文件下载
+     * @param id
+     * @param attachmentIndex
+     * @param response
+     * @throws DocumentException
+     * @throws IOException
+     */
     @GetMapping("/download/{id}")
-    public void downLoad(@PathVariable Long id,HttpServletResponse response) throws DocumentException, IOException {
-        //获取pdf二进制数据
+    public void downLoad(@PathVariable Long id, @RequestParam(name = "attachmentIndex", defaultValue = "0") int attachmentIndex, HttpServletResponse response) throws DocumentException, IOException {
+        // 获取邮件信息
         Email email = emailService.detailById(id);
-        if (email == null)
+        System.out.println(email.getAttachments().size());
+        if (email.getAttachments() == null || email.getAttachments().isEmpty()) {
+            // 如果邮件不存在或没有附件，则返回
             return;
-        byte[] pdfAttachment = email.getPdfAttachment();
+        }
+
+        /*指定下载的附件*/
+        List<EmailAttachment> attachments = email.getAttachments();
+        if (attachmentIndex < 0 || attachmentIndex >= attachments.size()) {
+            // 如果指定的附件索引无效，则返回
+            return;
+        }
+
+        /*获取*/
+        EmailAttachment selectedAttachment = attachments.get(attachmentIndex);
+        byte[] pdfAttachment = selectedAttachment.getData();
+
+        // 生成随机文件名
+        String randomFileName = "email"+UUID.randomUUID()+".pdf";
 
         // 设置响应头，指示文件类型和下载方式
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=email.pdf");
+        response.setHeader("Content-Disposition", "attachment;filename= "+randomFileName);
 
         // 获取响应输出流
         OutputStream outputStream = response.getOutputStream();
@@ -86,8 +107,8 @@ public class EmailController {
             // 关闭输出流
             outputStream.close();
         }
-
     }
+
 
 
     @GetMapping("/exportDocx")

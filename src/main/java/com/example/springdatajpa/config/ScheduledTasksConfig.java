@@ -2,6 +2,7 @@ package com.example.springdatajpa.config;
 
 import com.example.springdatajpa.Repository.EmailRepository;
 import com.example.springdatajpa.entity.Email;
+import com.example.springdatajpa.entity.EmailAttachment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -71,7 +72,7 @@ public class ScheduledTasksConfig {
                     getHtmlMailContent(message, content);
 
                     // 保存PDF附件
-                    byte[] pdfData = saveAttachment(message); //保存附件
+                    List<byte[]> pdfData = saveAttachment(message); //保存附件
 
                     /*获取发送时间*/
                     Date sentDate = message.getSentDate();
@@ -128,16 +129,28 @@ public class ScheduledTasksConfig {
         return false;
     }
 
-    private static Email getEmail(String title, String senderName, StringBuilder content, byte[] pdfData, Date sentDate) {
+    private static Email getEmail(String title, String senderName, StringBuilder content, List<byte[]> pdfDataList, Date sentDate) {
         /*进行组装*/
         Email email = new Email();
         email.setTitle(title);
         email.setSender(senderName);
         email.setContent(content.toString());
         email.setCreateTime(sentDate);
-        email.setPdfAttachment(pdfData);
+
+        // 创建邮件的附件集合
+        List<EmailAttachment> attachments = new ArrayList<>();
+        for (byte[] pdfData : pdfDataList) {
+            EmailAttachment attachment = new EmailAttachment();
+            attachment.setData(pdfData);
+            attachment.setEmail(email); // 设置附件关联的邮件
+            attachments.add(attachment);
+        }
+
+        email.setAttachments(attachments); // 设置邮件的附件集合
+
         return email;
     }
+
 
     /**
      * 过滤出未读邮件
@@ -211,35 +224,40 @@ public class ScheduledTasksConfig {
     /**
      * 保存附件
      */
-    private byte[] saveAttachment(Part part) throws Exception {
-        byte[] pdfData = null;
+    private List<byte[]> saveAttachment(Part part) throws Exception {
+        List<byte[]> pdfDataList = new ArrayList<>();
 
         if (part.isMimeType("multipart/*")) {
-            Multipart multipart = (Multipart) part.getContent(); //复杂体邮件
-            //复杂体邮件包含多个邮件体
+            Multipart multipart = (Multipart) part.getContent(); // 复杂体邮件
+            // 复杂体邮件包含多个邮件体
             int partCount = multipart.getCount();
             for (int i = 0; i < partCount; i++) {
-                //获得复杂体邮件中其中一个邮件体
+                // 获得复杂体邮件中其中一个邮件体
                 BodyPart bodyPart = multipart.getBodyPart(i);
-                //某一个邮件体也有可能是由多个邮件体组成的复杂体
+                // 某一个邮件体也有可能是由多个邮件体组成的复杂体
                 String disp = bodyPart.getDisposition();
                 if (disp != null && (disp.equalsIgnoreCase(Part.ATTACHMENT) || disp.equalsIgnoreCase(Part.INLINE))) {
-                    pdfData = readPDFData(bodyPart.getInputStream());
+                    byte[] pdfData = readPDFData(bodyPart.getInputStream());
+                    pdfDataList.add(pdfData); // 将二进制数据添加到列表中
                 } else if (bodyPart.isMimeType("multipart/*")) {
-                    pdfData = saveAttachment(bodyPart);
+                    List<byte[]> nestedPdfData = saveAttachment(bodyPart);
+                    pdfDataList.addAll(nestedPdfData); // 添加嵌套附件的数据到列表中
                 } else {
                     String contentType = bodyPart.getContentType();
                     if (contentType.indexOf("name") != -1 || contentType.indexOf("application") != -1) {
-                        pdfData = readPDFData(bodyPart.getInputStream());
+                        byte[] pdfData = readPDFData(bodyPart.getInputStream());
+                        pdfDataList.add(pdfData); // 将二进制数据添加到列表中
                     }
                 }
             }
         } else if (part.isMimeType("message/rfc822")) {
-            pdfData = saveAttachment((Part) part.getContent());
+            List<byte[]> nestedPdfData = saveAttachment((Part) part.getContent());
+            pdfDataList.addAll(nestedPdfData); // 添加嵌套附件的数据到列表中
         }
 
-        return pdfData;
+        return pdfDataList;
     }
+
 
     /**
      * 读取 PDF 附件的二进制数据
