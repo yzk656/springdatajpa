@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * word文档模板导出工具
+ * 文档导出工具
  */
 public class DocxUtil {
     private final static String TplRootPath;

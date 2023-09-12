@@ -16,17 +16,21 @@ public class EmailService {
 
     /**
      * 查询全部数据
+     *
      * @return
      */
-    public List<Email> list(){
+    public List<Email> list() {
         return emailRepository.findAll();
     }
 
 
-    /*查询单个数据*/
-    public Email detailById(Long id){
+    /**
+     * 获取邮件信息
+     * @param id
+     * @return
+     */
+    public Email detailById(Long id) {
         return emailRepository.findById(id).get();
     }
-
 
 }

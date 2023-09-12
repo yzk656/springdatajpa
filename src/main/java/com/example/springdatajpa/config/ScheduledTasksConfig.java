@@ -122,7 +122,7 @@ public class ScheduledTasksConfig {
      */
     private static boolean filter(String title, String senderName) {
         /*判断标题是否包含关键词*/
-        if (!(title != null && title.contains("发票") && senderName.contains("诺诺网") || (title != null && title.contains("发票") && senderName.contains("票通")))) {
+        if (!(title != null && title.contains("发票") && senderName.contains("诺诺") || (title != null && title.contains("发票") && senderName.contains("票通")))) {
             return true;
         }
         return false;

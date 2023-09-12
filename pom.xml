@@ -167,6 +167,16 @@
             <version>1.2.6</version> <!-- 使用合适的版本 -->
         </dependency>
 
+
+        <!--二进制数据解析生成pdf-->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>5.5.13</version> <!-- 或者选择其他版本 -->
+        </dependency>
+
+
+
     </dependencies>
 
     <build>
