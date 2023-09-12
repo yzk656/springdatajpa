@@ -11,17 +11,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMultipart;
 import javax.mail.internet.MimeUtility;
 import javax.mail.search.FlagTerm;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-
-/**
- * 定时获取邮件信息
- */
 @Configuration
 @EnableScheduling
 public class ScheduledTasksConfig {
@@ -38,15 +38,7 @@ public class ScheduledTasksConfig {
         /*存放未读邮件的标题*/
         emailTitles = new ArrayList<>();
 
-        // 邮箱配置
-        /*POP3协议*/
-//        Properties props = new Properties();
-//        props.put("mail.smtp.auth", "true");
-//        props.put("mail.smtp.starttls.enable", "true");
-//        props.put("mail.smtp.host", "smtp.163.com");
-//        props.put("mail.smtp.port", "25");
-
-        /*imap协议*/
+        // 邮箱配置 imap协议
         /*可以获取邮件状态信息，即是否被读过*/
         Properties props = new Properties();
         props.put("mail.store.protocol", "imap"); // 使用IMAP协议
@@ -111,6 +103,8 @@ public class ScheduledTasksConfig {
 
                     // 获取邮件内容
                     String content="";
+                    // 检查邮件的内容是否包含 PDF 附件
+                    byte[] pdfData=null;
                     String contentType = message.getContentType();
                     if (contentType.contains("text/plain") || contentType.contains("text/html")) {
                         // 邮件内容是纯文本或HTML格式
@@ -121,8 +115,18 @@ public class ScheduledTasksConfig {
                         Multipart multipart = (Multipart) message.getContent();
                         for (int i = 0; i < multipart.getCount(); i++) {
                             BodyPart bodyPart = multipart.getBodyPart(i);
-                            content = bodyPart.getContent().toString();
-                            System.out.println("邮件内容:\n" + content);
+                            if (bodyPart instanceof MimeBodyPart) {
+                                MimeBodyPart mimeBodyPart = (MimeBodyPart) bodyPart;
+                                System.out.println(mimeBodyPart.getContentType());
+                                if (mimeBodyPart.getContentType().equalsIgnoreCase("application/pdf")) {
+                                    // 这是一个 PDF 附件
+                                    InputStream inputStream = mimeBodyPart.getInputStream();
+                                    pdfData = readPDFData(inputStream);
+
+                                    // 在这里将 PDF 附件的二进制数据保存到数据库或文件系统中
+                                    // 例如：savePdfAttachment(pdfData);
+                                }
+                            }
                         }
                     }
                     /*获取发送时间*/
@@ -134,6 +138,7 @@ public class ScheduledTasksConfig {
                     email.setSender(senderName);
                     email.setContent(content);
                     email.setCreateTime(sentDate);
+                    email.setPdfAttachment(pdfData);
 
                     System.out.println(title);
                     System.out.println(senderName);
@@ -142,7 +147,6 @@ public class ScheduledTasksConfig {
 
                     /*保存到数据库中*/
                     emailRepository.save(email);
-
 
                     // 将邮件标记为已读
                     message.setFlag(Flags.Flag.SEEN, true);
@@ -161,7 +165,6 @@ public class ScheduledTasksConfig {
             System.out.println(emailTitle);
         }
 
-
         System.out.println("定时获取邮件任务执行了");
     }
 
@@ -177,5 +180,18 @@ public class ScheduledTasksConfig {
             }
         }
         return text;
+    }
+
+    // 读取 PDF 附件的二进制数据
+    private byte[] readPDFData(InputStream inputStream) throws Exception {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            byteArrayOutputStream.write(buffer, 0, bytesRead);
+        }
+
+        return byteArrayOutputStream.toByteArray();
     }
 }

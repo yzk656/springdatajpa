@@ -42,4 +42,7 @@ public class Email {
     @Column(name = "createTime",updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
+
+    @Lob
+    private byte[] pdfAttachment; // 存储 PDF 附件的二进制数据
 }

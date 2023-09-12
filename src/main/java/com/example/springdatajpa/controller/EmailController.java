@@ -47,7 +47,8 @@ public class EmailController {
      * @return
      */
     @GetMapping("/detail")
-    public Email detail(@Param("id") Long id) {
+    public Email detail(Long id) {
+        System.out.println(111);
         return emailService.detailById(id);
     }
 
