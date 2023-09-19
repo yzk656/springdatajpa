@@ -13,6 +13,7 @@
         #editor-container { height: 500px; }
     </style>
 </head>
+<!--todo:目前无法解决富文本编辑器无法显示问题-->
 <body>
 <!-- 其他页面内容 -->
 
@@ -25,7 +26,10 @@
                 <p><strong>标题：</strong>{{ email.title }}</p>
                 <p><strong>邮件内容：</strong></p>
                 <!-- 使用 wangEditor 富文本编辑器容器 -->
-                <div id="editor-container"></div>
+                <div id="editor—wrapper">
+                    <div id="toolbar-container"><!-- 工具栏 --></div>
+                    <div id="editor-container"><!-- 编辑器 --></div>
+                </div>
             </div>
         </el-main>
     </el-container>
@@ -49,7 +53,7 @@
         selector: '#editor-container',
         html: '<p><br></p>',
         config: editorConfig,
-        mode: 'default', // or 'simple'
+        mode: 'simple', // or 'simple'
     })
 
     const toolbarConfig = {}
@@ -58,7 +62,7 @@
         editor,
         selector: '#toolbar-container',
         config: toolbarConfig,
-        mode: 'default', // or 'simple'
+        mode: 'simple', // or 'simple'
     })
 
     // 使用 JavaScript 获取查询参数中的邮件ID
@@ -78,12 +82,15 @@
         },
         methods: {
             fetchEmails(emailId) {
+                editor.setHtml = function (content) {
+                    this.editor.html=content;
+                };
                 // 使用 Axios 或其他 AJAX 库发送请求获取邮件数据
                 axios.get(`http://localhost:8080/email/detail?id=${emailId}`)
                     .then(response => {
                         this.email = response.data;
                         // 在 wangEditor 中设置邮件内容
-                        editor.txt.html(this.email.content);
+                        editor.setHtml(this.email.content);
                     })
                     .catch(error => {
                         console.error('获取邮件数据失败：', error);

@@ -1,38 +1,25 @@
 package com.example.springdatajpa.controller;
 
 
-import com.example.springdatajpa.common.util.DocxUtil;
-import com.example.springdatajpa.common.util.FileUtil;
+import com.alibaba.fastjson.JSON;
 import com.example.springdatajpa.entity.Email;
 import com.example.springdatajpa.entity.EmailAttachment;
 import com.example.springdatajpa.service.EmailService;
-import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
-import javax.mail.*;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.UUID;
-
-import static com.example.springdatajpa.common.util.PDFBinaryUtil.base64StringToPDF;
 
 @RestController
 @RequestMapping("/email")
 public class EmailController {
-    /*BASE64Encoder和BASE64Decoder这两个方法是sun公司的内部方法，并没有在java api中公开过，所以使用这些方法是不安全的，
-     * 将来随时可能会从中去除，所以相应的应该使用替代的对象及方法，建议使用apache公司的API---可引用 import org.apache.commons.codec.binary.Base64;进行替换*/
-    static BASE64Encoder encoder = new sun.misc.BASE64Encoder();
-    static BASE64Decoder decoder = new sun.misc.BASE64Decoder();
 
+    /*存放邮箱标题、发件人、发件时间信息*/
     private List<String> emailTitles;
 
     @Autowired
@@ -44,8 +31,12 @@ public class EmailController {
      * @return
      */
     @GetMapping("/listEmail")
-    public List<Email> list() {
-        return emailService.list();
+    @ResponseBody
+    public String list() {
+        List<Email> list = emailService.list();
+        System.out.println(list);
+        String jsonString = JSON.toJSONString(list);
+        return jsonString;
     }
 
     /**
@@ -55,13 +46,18 @@ public class EmailController {
      * @return
      */
     @GetMapping("/detail")
-    public Email detail(Long id) {
-        System.out.println(111);
-        return emailService.detailById(id);
+    @ResponseBody
+    public String detail(Long id) {
+        Email email = emailService.detailById(id);
+        /*转换成json数据*/
+        String jsonString = JSON.toJSONString(email);
+        /*返回给调用者*/
+        return jsonString;
     }
 
     /**
      * pdf文件下载
+     *
      * @param id
      * @param attachmentIndex
      * @param response
@@ -90,11 +86,11 @@ public class EmailController {
         byte[] pdfAttachment = selectedAttachment.getData();
 
         // 生成随机文件名
-        String randomFileName = "email"+UUID.randomUUID()+".pdf";
+        String randomFileName = "email" + UUID.randomUUID() + ".pdf";
 
         // 设置响应头，指示文件类型和下载方式
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment;filename= "+randomFileName);
+        response.setHeader("Content-Disposition", "attachment;filename= " + randomFileName);
 
         // 获取响应输出流
         OutputStream outputStream = response.getOutputStream();
@@ -109,43 +105,5 @@ public class EmailController {
         }
     }
 
-
-
-    @GetMapping("/exportDocx")
-    public void exportDocx(HttpServletResponse response) throws MessagingException {
-//        /*先获取邮箱数据*/
-//        readEmailAndExport();
-//        System.out.println(emailTitles);
-
-
-        // 导出文件所在临时目录
-        String uuid = UUID.randomUUID().toString();
-        String dirPath = DocxUtil.TempDirPath + "/" + "邮箱" + "/" + uuid;
-        File tempPath = new File(dirPath);
-        if (!tempPath.exists()) {
-            tempPath.mkdirs();
-        }
-
-        try {
-            String res = dirPath + DocxUtil.Tpl_CommOrder;
-            DocxUtil.exportEmailTitle(emailTitles, res);
-
-            String fileName = new String(("邮箱标题" + uuid + ".docx").getBytes(), "ISO8859-1");
-            response.setContentType("application/octet-stream;charset=ISO8859-1");
-            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
-            response.addHeader("Pargam", "no-cache");
-            response.addHeader("Cache-Control", "no-cache");
-
-            OutputStream os = response.getOutputStream();
-            FileInputStream in = new FileInputStream(res);
-            IOUtils.copy(in, os);
-            in.close();
-            os.flush();
-            os.close();
-            FileUtil.deleteDir(tempPath);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
 }
