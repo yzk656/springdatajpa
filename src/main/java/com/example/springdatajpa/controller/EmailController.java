@@ -7,6 +7,8 @@ import com.example.springdatajpa.entity.EmailAttachment;
 import com.example.springdatajpa.service.EmailService;
 import com.itextpdf.text.DocumentException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -15,7 +17,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.UUID;
 
-@RestController
+@Controller
 @RequestMapping("/email")
 public class EmailController {
 
