@@ -23,25 +23,25 @@
     // 创建EmailList组件
     const EmailList = {
         template: `
-            <div>
-                <el-container>
-                    <el-header>
-                        <h1>Email List</h1>
-                    </el-header>
-                    <el-main>
-                        <el-table :data="emails" style="width: 100%">
-                            <el-table-column prop="title" label="标题"></el-table-column>
-                            <el-table-column prop="sender" label="发件人"></el-table-column>
-                            <el-table-column prop="createTime" label="发送时间"></el-table-column>
-                            <el-table-column label="操作">
-                                <template slot-scope="scope">
-                                    <el-button type="primary" @click="viewDetails(scope.row.id)">查看详情</el-button>
-                                </template>
-                            </el-table-column>
-                        </el-table>
-                    </el-main>
-                </el-container>
-            </div>
+          <div>
+            <el-container>
+              <el-header>
+                <h1>Email List</h1>
+              </el-header>
+              <el-main>
+                <el-table :data="emails" style="width: 100%">
+                  <el-table-column prop="title" label="标题"></el-table-column>
+                  <el-table-column prop="sender" label="发件人"></el-table-column>
+                  <el-table-column prop="createTime" label="发送时间"></el-table-column>
+                  <el-table-column label="操作">
+                    <template slot-scope="scope">
+                      <el-button type="primary" @click="viewDetails(scope.row.id)">查看详情</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-main>
+            </el-container>
+          </div>
         `,
         data() {
             return {
@@ -62,46 +62,20 @@
                     });
             },
             viewDetails(id) {
-                // 使用路由导航到详情页，并传递ID参数
-                this.$router.push({ name: 'detail', params: { id: id }});
-            }
-        }
-    };
-
-    // 创建EmailDetail组件
-    const EmailDetail = {
-        template: `
-            <div>
-                <el-container>
-                    <el-main>
-                        <h1>邮件详情</h1>
-                        <div>
-                            <p><strong>发件人：</strong>{{ email.sender }}</p>
-                            <p><strong>标题：</strong>{{ email.title }}</p>
-                            <p><strong>邮件内容：</strong></p>
-                            <div v-html="email.content"></div>
-                        </div>
-                    </el-main>
-                </el-container>
-            </div>
-        `,
-        data() {
-            return {
-                email: {}
-            }
-        },
-        created() {
-            this.fetchEmail();
-        },
-        methods: {
-            fetchEmail() {
-                const id = this.$route.params.id; // 获取路由参数中的ID
-                axios.get(`http://localhost:8080/email/detail?id=${id}`)
+                // 使用路由导航到 detail.html 页面，并传递ID参数
+                axios.get('http://localhost:8080/email/detail?id=' + id)
                     .then(response => {
-                        this.email = response.data;
+                        const emailData = response.data; // 从后端获取的数据
+                        // 将数据传递给B页面
+                        // 可以使用LocalStorage、Cookies或URL参数等方式传递数据
+                        // 以下示例使用LocalStorage传递数据
+                        localStorage.setItem('emailData', JSON.stringify(emailData));
+
+                        // 跳转到B页面
+                        window.location.href = 'http://localhost:8080/detail.html';
                     })
                     .catch(error => {
-                        console.error('获取邮件详情失败：', error);
+                        console.error('获取邮件数据失败：', error);
                     });
             }
         }
@@ -110,8 +84,8 @@
     // 创建路由实例
     const router = new VueRouter({
         routes: [
-            { path: '/', component: EmailList },
-            { path: '/detail/:id', name: 'detail', component: EmailDetail }
+            {path: '/', component: EmailList},
+            {path: '/detail/:id', name: 'detail', component: null}
         ]
     });
 
